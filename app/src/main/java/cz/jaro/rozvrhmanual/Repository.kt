@@ -94,6 +94,9 @@ class Repository(
     }
 
     fun setUri(uri: String?) {
+        if (uri == null && _uri.value != null) {
+            Uri.parse(_uri.value).toFile().delete()
+        }
         sharedPreferences.edit().putString("uri", uri).apply()
         _uri.value = uri
     }
