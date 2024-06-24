@@ -9,7 +9,7 @@ plugins {
 
 
 android {
-    namespace = "cz.jaro.rozvrhmanual"
+    namespace = "cz.jaro.rozvrh"
     compileSdk = 34
 
     defaultConfig {

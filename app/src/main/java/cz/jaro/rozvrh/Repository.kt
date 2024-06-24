@@ -1,15 +1,15 @@
-package cz.jaro.rozvrhmanual
+package cz.jaro.rozvrh
 
 import android.content.ContentResolver
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.net.toFile
 import androidx.core.net.toUri
-import cz.jaro.rozvrhmanual.rozvrh.AdvancedTyden
-import cz.jaro.rozvrhmanual.rozvrh.Bunka
-import cz.jaro.rozvrhmanual.rozvrh.Tyden
-import cz.jaro.rozvrhmanual.rozvrh.Tyden2
-import cz.jaro.rozvrhmanual.rozvrh.TypBunky
+import cz.jaro.rozvrh.rozvrh.AdvancedTyden
+import cz.jaro.rozvrh.rozvrh.Bunka
+import cz.jaro.rozvrh.rozvrh.Tyden
+import cz.jaro.rozvrh.rozvrh.Tyden2
+import cz.jaro.rozvrh.rozvrh.TypBunky
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull

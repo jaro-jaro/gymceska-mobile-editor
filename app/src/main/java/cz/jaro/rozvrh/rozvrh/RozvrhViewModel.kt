@@ -1,12 +1,12 @@
-package cz.jaro.rozvrhmanual.rozvrh
+package cz.jaro.rozvrh.rozvrh
 
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.ActivityResult
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import cz.jaro.rozvrhmanual.Repository
-import cz.jaro.rozvrhmanual.rozvrh.TvorbaRozvrhu.vytvoritRozvrhPodleJinych
+import cz.jaro.rozvrh.Repository
+import cz.jaro.rozvrh.rozvrh.TvorbaRozvrhu.vytvoritRozvrhPodleJinych
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed

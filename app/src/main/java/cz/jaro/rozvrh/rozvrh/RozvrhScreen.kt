@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual.rozvrh
+package cz.jaro.rozvrh.rozvrh
 
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable

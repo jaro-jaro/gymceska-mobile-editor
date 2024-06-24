@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual.rozvrh
+package cz.jaro.rozvrh.rozvrh
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth

@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual.ui.theme
+package cz.jaro.rozvrh.ui.theme
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme

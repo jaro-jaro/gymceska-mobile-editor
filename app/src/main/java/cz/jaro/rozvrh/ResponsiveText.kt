@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual
+package cz.jaro.rozvrh
 
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text

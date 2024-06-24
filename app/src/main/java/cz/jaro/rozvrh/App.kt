@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual
+package cz.jaro.rozvrh
 
 import android.app.Application
 import android.content.Context

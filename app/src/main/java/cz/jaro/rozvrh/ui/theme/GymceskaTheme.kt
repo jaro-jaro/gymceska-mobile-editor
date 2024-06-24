@@ -1,4 +1,4 @@
-package cz.jaro.rozvrhmanual.ui.theme
+package cz.jaro.rozvrh.ui.theme
 
 import android.app.Activity
 import android.os.Build
