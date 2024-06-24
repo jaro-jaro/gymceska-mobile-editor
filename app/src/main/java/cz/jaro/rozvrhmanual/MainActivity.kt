@@ -23,17 +23,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val tridy by repo.tridy.collectAsStateWithLifecycle(setOf())
+            val tridy by repo.puvodniTridy.collectAsStateWithLifecycle(setOf())
             val uri by repo.uri.collectAsStateWithLifecycle()
 
             val launcher = rememberResultLauncher(ActivityResultContracts.OpenDocument())
             LaunchedEffect(uri) {
-                if (!uri.isNullOrBlank()) repo.loadData()
+                if (uri.isNotNullNorBlank()) repo.loadData()
                 else launcher.launch(
                     input = arrayOf("application/json")
-                ) { newUri ->
-                    if (newUri == null) return@launch
-                    repo.loadFile(newUri)
+                ) { uri ->
+                    if (uri == null) return@launch
+                    repo.loadFiles(uri)
                     repo.loadData()
                 }
             }
@@ -49,3 +49,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+private fun String?.isNotNullNorBlank() = !isNullOrBlank()

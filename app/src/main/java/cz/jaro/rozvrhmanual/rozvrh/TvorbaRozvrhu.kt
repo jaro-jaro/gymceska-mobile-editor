@@ -8,18 +8,27 @@ object TvorbaRozvrhu {
 
     private val dny = listOf("Po", "Út", "St", "Čt", "Pá", "So", "Ne", "Rden", "Pi")
 
-    suspend fun vytvoritRozvrhPodleJinych(
+    fun vytvoritRozvrhPodleJinych(
         vjec: Vjec,
         repo: Repository,
         tridy: List<Vjec.TridaVjec>,
-    ): Tyden = withContext(Dispatchers.IO) {
+        new: Boolean,
+    ): Tyden = vytvoritRozvrhPodleJinych(vjec, tridy) { trida ->
+        if (new) repo.upravenyRozvrh(trida.jmeno)!! else repo.puvodniRozvrh(trida.jmeno)!!
+    }
+
+    fun vytvoritRozvrhPodleJinych(
+        vjec: Vjec,
+        tridy: List<Vjec.TridaVjec>,
+        ziskatRozvrh: (Vjec.TridaVjec) -> Tyden,
+    ): Tyden {
         require(vjec is Vjec.MistnostVjec || vjec is Vjec.VyucujiciVjec)
 
         val novaTabulka = MutableList(6) { MutableList(11) { mutableListOf<Bunka>() } }
 
         tridy.map { trida ->
 
-            val result = repo.rozvrh(trida.jmeno)!!
+            val result = ziskatRozvrh(trida)
 
             result.forEachIndexed trida@{ i, den ->
                 den.forEachIndexed den@{ j, hodina ->
@@ -50,22 +59,22 @@ object TvorbaRozvrhu {
             }
         }
         novaTabulka.forEachIndexed { i, den ->
-            if (den.getOrNull(1)?.singleOrNull()?.typ == TypBunky.Volno) return@forEachIndexed
             den.forEachIndexed { j, hodina ->
                 hodina.ifEmpty {
-                    novaTabulka[i][j] += Bunka.prazdna
+                    novaTabulka[i][j] += Bunka.prazdna(id = "${vjec.zkratka}-$i-$j-#")
                 }
             }
         }
         novaTabulka[0][0][0] = novaTabulka[0][0][0].copy(predmet = vjec.zkratka)
-        novaTabulka
+        return novaTabulka
     }
 
-    suspend fun vytvoritSpecialniRozvrh(
+    fun vytvoritSpecialniRozvrh(
         vjec: Vjec,
         repo: Repository,
         tridy: List<Vjec.TridaVjec>,
-    ): Tyden = withContext(Dispatchers.IO) {
+        new: Boolean,
+    ): Tyden {
         require(vjec is Vjec.DenVjec || vjec is Vjec.HodinaVjec)
 
         val vyska = when (vjec) {
@@ -83,10 +92,10 @@ object TvorbaRozvrhu {
 
         tridy.map { trida ->
 
-            val result = repo.rozvrh(trida.jmeno)!!
+            val result = if (new) repo.upravenyRozvrh(trida.jmeno)!! else repo.puvodniRozvrh(trida.jmeno)!!
 
             if (vjec is Vjec.DenVjec) {
-                novaTabulka[tridy.indexOf(trida) + 1][0] = mutableListOf(Bunka.prazdna.copy(predmet = trida.zkratka))
+                novaTabulka[tridy.indexOf(trida) + 1][0] = mutableListOf(Bunka.prazdna(id = "${vjec.zkratka}-${tridy.indexOf(trida) + 1}-0-0").copy(predmet = trida.zkratka))
                 result[vjec.index].forEachIndexed den@{ j, hodina ->
                     novaTabulka[0][j] = result[0][j].toMutableList()
                     hodina.forEach hodina@{ bunka ->
@@ -98,7 +107,7 @@ object TvorbaRozvrhu {
             }
 
             if (vjec is Vjec.HodinaVjec) {
-                novaTabulka[0][tridy.indexOf(trida) + 1] = mutableListOf(Bunka.prazdna.copy(predmet = trida.zkratka))
+                novaTabulka[0][tridy.indexOf(trida) + 1] = mutableListOf(Bunka.prazdna(id = "${vjec.zkratka}-0-${tridy.indexOf(trida) + 1}-0").copy(predmet = trida.zkratka))
                 result.forEachIndexed trida@{ i, den ->
                     novaTabulka[i][0] = result[i][0].toMutableList()
                     den.drop(1).singleOrGet(vjec.index - 1).forEach hodina@{ bunka ->
@@ -112,15 +121,14 @@ object TvorbaRozvrhu {
             novaTabulka[0][0] = result[0][0].toMutableList()
         }
         novaTabulka.forEachIndexed { i, den ->
-            if (den.getOrNull(1)?.singleOrNull()?.typ == TypBunky.Volno) return@forEachIndexed
             den.forEachIndexed { j, hodina ->
                 hodina.ifEmpty {
-                    novaTabulka[i][j] += Bunka.prazdna
+                    novaTabulka[i][j] += Bunka.prazdna(id = "${vjec.zkratka}-$i-$j-#")
                 }
             }
         }
         novaTabulka[0][0][0] = novaTabulka[0][0][0].copy(predmet = vjec.zkratka)
-        novaTabulka
+        return novaTabulka
     }
 }
 

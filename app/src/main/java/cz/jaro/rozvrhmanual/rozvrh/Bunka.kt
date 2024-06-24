@@ -1,21 +1,31 @@
 package cz.jaro.rozvrhmanual.rozvrh
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cz.jaro.rozvrhmanual.ResponsiveText
 import kotlinx.serialization.Serializable
+
+typealias MutableTyden = MutableList<MutableDen>
+typealias MutableDen = MutableList<MutableHodina>
+typealias MutableHodina = MutableList<Bunka>
 
 typealias Tyden = List<Den>
 typealias Den = List<Hodina>
@@ -27,21 +37,35 @@ data class Bunka(
     val predmet: String,
     val ucitel: String,
     val tridaSkupina: String = "",
+    val id: String,
     val typ: TypBunky = TypBunky.Normalni,
 ) {
     companion object {
 
-        val prazdna = Bunka(
+        fun prazdna(id: String) = Bunka(
             ucebna = "",
             predmet = "",
             ucitel = "",
             tridaSkupina = "",
+            id = id,
             typ = TypBunky.Normalni
         )
     }
-
 }
 
+typealias Tyden2 = List<Den2>
+typealias Den2 = List<Hodina2>
+typealias Hodina2 = List<Bunka2>
+
+@Serializable
+data class Bunka2(
+    val ucebna: String,
+    val predmet: String,
+    val ucitel: String,
+    val tridaSkupina: String = "",
+)
+
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Bunka(
     bunka: Bunka,
@@ -50,21 +74,20 @@ fun Bunka(
     mistnosti: List<Vjec.MistnostVjec>,
     vyucujici: List<Vjec.VyucujiciVjec>,
     kliklNaNeco: (vjec: Vjec) -> Unit,
-    forceOneColumnCells: Boolean = false,
+    kliklNaPredmet: () -> Unit,
+    podrzelMistnost: () -> Unit,
+    icon: ImageVector?,
 ) = Box(
     modifier = Modifier
         .border(1.dp, MaterialTheme.colorScheme.secondary)
         .then(
-            if (bunka.typ == TypBunky.Volno && !forceOneColumnCells) Modifier
-                .size(zakladniVelikostBunky * 10, zakladniVelikostBunky / aspectRatio)
-            else Modifier
+            Modifier
                 .aspectRatio(aspectRatio)
                 .size(zakladniVelikostBunky, zakladniVelikostBunky / aspectRatio)
         )
         .background(
             when (bunka.typ) {
-                TypBunky.Suplovani -> MaterialTheme.colorScheme.errorContainer
-                TypBunky.Volno, TypBunky.Trid -> MaterialTheme.colorScheme.tertiaryContainer
+                TypBunky.Upravena -> MaterialTheme.colorScheme.primaryContainer
                 TypBunky.Normalni -> MaterialTheme.colorScheme.background
             }
         ),
@@ -80,15 +103,18 @@ fun Bunka(
             text = bunka.ucebna,
             modifier = Modifier
                 .padding(all = 8.dp)
-                .clickable {
-                    if (bunka.ucebna.isEmpty()) return@clickable
+                .combinedClickable(
+                    onLongClick = {
+                        podrzelMistnost()
+                    },
+                ) {
+                    if (bunka.ucebna.isEmpty()) return@combinedClickable
                     val vjec = mistnosti
-                        .find { bunka.ucebna == it.zkratka } ?: return@clickable
+                        .find { bunka.ucebna == it.zkratka } ?: return@combinedClickable
                     kliklNaNeco(vjec)
                 },
             color = when (bunka.typ) {
-                TypBunky.Suplovani -> MaterialTheme.colorScheme.onErrorContainer
-                TypBunky.Volno, TypBunky.Trid -> MaterialTheme.colorScheme.onTertiaryContainer
+                TypBunky.Upravena -> MaterialTheme.colorScheme.onPrimaryContainer
                 TypBunky.Normalni -> MaterialTheme.colorScheme.onBackground
             },
         )
@@ -114,24 +140,29 @@ fun Bunka(
                     kliklNaNeco(vjec)
                 },
             color = when (bunka.typ) {
-                TypBunky.Suplovani -> MaterialTheme.colorScheme.onErrorContainer
-                TypBunky.Volno, TypBunky.Trid -> MaterialTheme.colorScheme.onTertiaryContainer
+                TypBunky.Upravena -> MaterialTheme.colorScheme.onPrimaryContainer
                 TypBunky.Normalni -> MaterialTheme.colorScheme.onBackground
             },
         )
     }
 
     @Composable
-    fun Predmet() = ResponsiveText(
-        text = bunka.predmet,
-        modifier = Modifier
-            .padding(all = 8.dp),
-        color = when (bunka.typ) {
-            TypBunky.Suplovani -> MaterialTheme.colorScheme.onErrorContainer
-            TypBunky.Volno, TypBunky.Trid -> MaterialTheme.colorScheme.onTertiaryContainer
-            TypBunky.Normalni -> MaterialTheme.colorScheme.primary
-        }
-    )
+    fun Predmet(modifier: Modifier = Modifier) = Row(modifier, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        if (icon != null) Icon(icon, null, Modifier.size(24.dp).padding(horizontal = 4.dp))
+        ResponsiveText(
+            text = bunka.predmet,
+            modifier = Modifier
+                .padding(all = 8.dp)
+                .clickable {
+                    kliklNaPredmet()
+                },
+            textAlign = TextAlign.Center,
+            color = when (bunka.typ) {
+                TypBunky.Upravena -> MaterialTheme.colorScheme.onPrimaryContainer
+                TypBunky.Normalni -> MaterialTheme.colorScheme.primary
+            }
+        )
+    }
 
     @Composable
     fun Ucitel() = ResponsiveText(
@@ -148,16 +179,14 @@ fun Bunka(
                 kliklNaNeco(vjec)
             },
         color = when (bunka.typ) {
-            TypBunky.Suplovani -> MaterialTheme.colorScheme.onErrorContainer
-            TypBunky.Volno, TypBunky.Trid -> MaterialTheme.colorScheme.onTertiaryContainer
+            TypBunky.Upravena -> MaterialTheme.colorScheme.onPrimaryContainer
             TypBunky.Normalni -> MaterialTheme.colorScheme.onBackground
         },
     )
 
     val divnyRozlozeni = aspectRatio > 1F
-    val jesteDivnejsiRozlozeni = bunka.typ == TypBunky.Volno
 
-    if (!jesteDivnejsiRozlozeni) Row(
+    Row(
         Modifier
             .matchParentSize(),
         verticalAlignment = Alignment.Top,
@@ -177,12 +206,12 @@ fun Bunka(
         }
     }
 
-    if (divnyRozlozeni && !jesteDivnejsiRozlozeni) Row(
+    if (divnyRozlozeni) Row(
         Modifier
             .matchParentSize(),
         verticalAlignment = Alignment.Bottom,
     ) {
-        if (bunka.predmet.isNotBlank()) Box(
+        Box(
             Modifier,
             contentAlignment = Alignment.BottomStart,
         ) {
@@ -197,34 +226,19 @@ fun Bunka(
         }
     }
 
-    if (!divnyRozlozeni && !jesteDivnejsiRozlozeni) Box(
+    if (!divnyRozlozeni) Box(
         Modifier
             .matchParentSize(),
         contentAlignment = Alignment.Center,
     ) {
-        Predmet()
+        Predmet(Modifier.fillMaxWidth(1F))
     }
-    if (!divnyRozlozeni && !jesteDivnejsiRozlozeni) Box(
+    if (!divnyRozlozeni) Box(
         Modifier
             .matchParentSize(),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Ucitel()
-    }
-
-    if (jesteDivnejsiRozlozeni) Box(
-        Modifier
-            .matchParentSize(),
-        contentAlignment = if (forceOneColumnCells) Alignment.Center else Alignment.CenterStart,
-    ) {
-        ResponsiveText(
-            text = bunka.predmet,
-            modifier = Modifier
-                .padding(all = 8.dp),
-            color = MaterialTheme.colorScheme.onTertiaryContainer,
-            textAlign = TextAlign.Center,
-            maxLines = Int.MAX_VALUE,
-        )
     }
 }
 

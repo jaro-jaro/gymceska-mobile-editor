@@ -13,7 +13,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "cz.jaro.rozvrhmanual"
+        applicationId = "cz.jaro.rozvrheditor"
         minSdk = 33
         targetSdk = 34
         versionCode = 31
