@@ -86,8 +86,8 @@ fun Tabulka(
 ) {
     if (tabulka.isEmpty()) return
 
-    val horScrollState = rememberScrollState(Int.MAX_VALUE)
-    val verScrollState = rememberScrollState(Int.MAX_VALUE)
+    val horScrollState = rememberScrollState()
+    val verScrollState = rememberScrollState()
 
     Column(
         Modifier.doubleScrollable(horScrollState, verScrollState)
@@ -126,7 +126,7 @@ fun Tabulka(
 
             Row(
                 modifier = Modifier
-                    .horizontalScroll(horScrollState, enabled = false, reverseScrolling = true)
+                    .horizontalScroll(horScrollState, enabled = false, reverseScrolling = false)
                     .border(1.dp, MaterialTheme.colorScheme.secondary)
             ) {
                 tabulka.first().drop(1).map { it.first() }.forEachIndexed { i, bunka ->
@@ -176,7 +176,7 @@ fun Tabulka(
         Column(
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                .verticalScroll(verScrollState, enabled = false, reverseScrolling = true),
+                .verticalScroll(verScrollState, enabled = false, reverseScrolling = false),
         ) {
             Row {
                 Column(
@@ -218,7 +218,7 @@ fun Tabulka(
                 }
 
                 Column(
-                    Modifier.horizontalScroll(horScrollState, enabled = false, reverseScrolling = true)
+                    Modifier.horizontalScroll(horScrollState, enabled = false, reverseScrolling = false)
                 ) {
                     tabulka.drop(1).forEachIndexed { iDne, radek ->
                         val nasobitelVyskyCeleRadky = when {
@@ -646,7 +646,7 @@ fun AdresaBunky?.neniNullAleCelaHodina() = this != null && iBunky == CELA_HODINA
 fun AdresaBunky?.jeNullNeboCelaHodina() = this == null || iBunky == CELA_HODINA
 fun AdresaBunky?.neniNullAniCelaHodina() = !jeNullNeboCelaHodina()
 
-private fun Modifier.doubleScrollable(
+fun Modifier.doubleScrollable(
     scrollStateX: ScrollState,
     scrollStateY: ScrollState
 ) = composed {
@@ -663,8 +663,8 @@ private fun Modifier.doubleScrollable(
             onDrag = { pointerInputChange, offset ->
                 coroutineScope.launch {
                     velocityTracker.addPointerInputChange(pointerInputChange)
-                    scrollStateX.scrollBy(offset.x)
-                    scrollStateY.scrollBy(offset.y)
+                    scrollStateX.scrollBy(-offset.x)
+                    scrollStateY.scrollBy(-offset.y)
                 }
             },
             onDragEnd = {
@@ -688,7 +688,7 @@ private fun Modifier.doubleScrollable(
                         }
 
                         with(flingBehaviorX) {
-                            scrollScope.performFling(velocity.x)
+                            scrollScope.performFling(-velocity.x)
                         }
                     }
                 }
@@ -710,7 +710,7 @@ private fun Modifier.doubleScrollable(
                         }
 
                         with(flingBehaviorY) {
-                            scrollScope.performFling(velocity.y)
+                            scrollScope.performFling(-velocity.y)
                         }
                     }
                 }
