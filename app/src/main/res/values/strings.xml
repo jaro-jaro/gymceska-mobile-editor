@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Rozvrh manuál</string>
+    <string name="app_name">Editor</string>
     <string name="rozvrh">Rozvrh</string>
     <string name="domaci_ukoly">Domácí úkoly</string>
     <string name="ukoly">Úkoly</string>
