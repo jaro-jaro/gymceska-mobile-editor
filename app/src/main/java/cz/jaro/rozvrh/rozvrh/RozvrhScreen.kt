@@ -116,7 +116,7 @@ fun Rozvrh(
                             append("$den1 $hodina1.")
                             if (den1 != den2 || hodina1 != hodina2) {
                                 append(" > ")
-                                if (den1 != den2) append("$den2 ")
+                                append("$den2 ")
                                 append("$hodina2.")
                             }
                             append(" – ")
