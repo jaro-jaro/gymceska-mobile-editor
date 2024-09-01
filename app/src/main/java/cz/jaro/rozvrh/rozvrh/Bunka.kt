@@ -40,8 +40,8 @@ data class Bunka(
     val id: String,
     val typ: TypBunky = TypBunky.Normalni,
 ) {
+    override fun toString() = "$tridaSkupina $predmet $ucitel ($ucebna)"
     companion object {
-
         fun prazdna(id: String) = Bunka(
             ucebna = "",
             predmet = "",

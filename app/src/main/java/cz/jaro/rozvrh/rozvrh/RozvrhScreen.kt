@@ -22,8 +22,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cz.jaro.rozvrh.Change
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -41,6 +44,7 @@ fun RozvrhScreen(
     val tabulka: Tyden? by viewModel.tabulka.collectAsStateWithLifecycle()
     val realVjec by viewModel.vjec.collectAsStateWithLifecycle()
     val new by viewModel.new.collectAsStateWithLifecycle()
+    val changes by viewModel.changes.collectAsStateWithLifecycle()
 
     Rozvrh(
         tabulka = tabulka,
@@ -53,6 +57,7 @@ fun RozvrhScreen(
         download = viewModel::download,
         mistnosti = viewModel.mistnosti,
         vyucujici = viewModel.vyucujici,
+        changes = changes,
         new = new,
         edit = viewModel.edit,
         ziskatRozvrh = {
@@ -62,7 +67,8 @@ fun RozvrhScreen(
 }
 
 private fun Hodina.jsouStejne() = size > 1 && all {
-    it.predmet == first().predmet && it.ucitel == first().ucitel && it.ucebna == first().ucebna && it.tridaSkupina.split(" ").last() == first().tridaSkupina.split(" ").last()
+    it.predmet == first().predmet && it.ucitel == first().ucitel && it.ucebna == first().ucebna && it.tridaSkupina.split(" ")
+        .last() == first().tridaSkupina.split(" ").last()
 } || size % 2 == 0 && size > 1 && count { it.predmet.startsWith("S:") } == count() / 2 && count { it.predmet.startsWith("L:") } == count() / 2
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +82,7 @@ fun Rozvrh(
     download: () -> Unit,
     upload: () -> Unit,
     changeView: () -> Unit,
+    changes: List<Change>?,
     new: Boolean,
     mistnosti: List<Vjec.MistnostVjec>,
     vyucujici: List<Vjec.VyucujiciVjec>,
@@ -84,6 +91,7 @@ fun Rozvrh(
 ) {
     var pamet by remember { mutableStateOf<AdresaBunky?>(null) }
     var vysledkyDialog by remember { mutableStateOf(emptyList<String>()) }
+    val clipboardManager = LocalClipboardManager.current
     Scaffold(
         topBar = {
             AppBar(
@@ -93,6 +101,32 @@ fun Rozvrh(
                 changeView = changeView,
                 new = new,
                 pamet = pamet,
+                showFeatures = {
+                    val export = changes?.joinToString("\n") { change ->
+                        val den1 = listOf("", "Po", "Út", "St", "Čt", "Pá")[change.fromLocation.iDne]
+                        val den2 = listOf("", "Po", "Út", "St", "Čt", "Pá")[change.toLocation.iDne]
+                        val hodina1 = change.fromLocation.iHodiny - 1
+                        val hodina2 = change.toLocation.iHodiny - 1
+                        val ucebna1 = change.from.ucebna
+                        val ucebna2 = change.to.ucebna
+                        val tridaSkupina = change.from.tridaSkupina
+                        val predmet = change.from.predmet
+                        val ucitel = change.from.ucitel
+                        buildString {
+                            append("$den1 $hodina1.")
+                            if (den1 != den2 || hodina1 != hodina2) {
+                                append(" > ")
+                                if (den1 != den2) append("$den2 ")
+                                append("$hodina2.")
+                            }
+                            append(" – ")
+                            append("$tridaSkupina $predmet $ucitel ")
+                            if (ucebna1 != ucebna2) append("($ucebna1 > $ucebna2)")
+                            else append("($ucebna1)")
+                        }
+                    } ?: return@AppBar
+                    clipboardManager.setText(AnnotatedString(export))
+                },
                 zapomenout = {
                     pamet = null
                 },
@@ -102,6 +136,109 @@ fun Rozvrh(
             )
         }
     ) { paddingValues ->
+        /*if (newFeatureDialog != null) AlertDialog(
+            onDismissRequest = {
+                newFeatureDialog = null
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (renamingDialog != null) renameFeature(renamingDialog!!, newFeatureDialog!!)
+                        else startFeature(newFeatureDialog!!)
+                        newFeatureDialog = null
+                        renamingDialog = null
+                    }
+                ) {
+                    Text("Vytvořit")
+                }
+            },
+            text = {
+                TextField(
+                    value = newFeatureDialog!!,
+                    onValueChange = {
+                        newFeatureDialog = it
+                    },
+                    label = {
+                        Text("Název sekce")
+                    },
+                )
+            },
+        )*/
+        /*if (featuresDialog) AlertDialog(
+            onDismissRequest = {
+                featuresDialog = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        featuresDialog = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    features.forEachIndexed { i, feature ->
+                        Text(feature.title, style = MaterialTheme.typography.titleMedium)
+                        Row {
+                            if (feature.title != currentFeatureName) IconButton(
+                                onClick = {
+                                    removeFeature(feature.title)
+                                }
+                            ) {
+                                Icon(Icons.Default.Remove, "Odebrat")
+                            }
+                            if (feature.title != currentFeatureName) IconButton(
+                                onClick = {
+                                    newFeatureDialog = feature.title
+                                    renamingDialog = feature.title
+                                }
+                            ) {
+                                Icon(Icons.Default.EditNote, "Přejmenovat")
+                            }
+                            if (feature.title == currentFeatureName) IconButton(
+                                onClick = {
+                                    finishFeature()
+                                }
+                            ) {
+                                Icon(Icons.Default.Check, "Dokončit")
+                            }
+                        }
+                        feature.chnages.forEach { change ->
+                            when (change) {
+                                is Move -> {
+                                    val fromDen = listOf("", "Po", "Út", "St", "Čt", "Pá")[change.fromLocation.iDne]
+                                    val toDen = listOf("", "Po", "Út", "St", "Čt", "Pá")[change.toLocation.iDne]
+                                    Text(
+                                        "$fromDen ${change.fromLocation.iHodiny - 1}. > ${if (fromDen != toDen) "$toDen " else ""}${change.toLocation.iHodiny - 1}.: ${change.from.tridaSkupina} ${change.from.predmet} ${change.from.ucitel} (${
+                                            if (change.from.ucebna != change.to.ucebna) "${change.from.ucebna} > ${change.to.ucebna}"
+                                            else change.from.ucebna
+                                        })",
+                                    )
+                                }
+
+                                is PureChange -> {
+                                    val den = listOf("", "Po", "Út", "St", "Čt", "Pá")[change.location.iDne]
+                                    Text(
+                                        "$den ${change.location.iHodiny - 1}.: ${change.from.tridaSkupina} ${change.from.predmet} ${change.from.ucitel} (${change.from.ucebna} > ${change.to.ucebna})"
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    if (currentFeatureName == null) IconButton(
+                        onClick = {
+                            newFeatureDialog = ""
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, "Nová sekce")
+                    }
+                }
+            }
+        )*/
         if (vysledkyDialog.isNotEmpty()) AlertDialog(
             onDismissRequest = {
                 vysledkyDialog = emptyList()

@@ -9,10 +9,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="cz.jaro.rozvrhmanual" />
-                  <option name="mobileSdkAppId" value="1:477220885813:android:164bcc2faea4025df7687c" />
-                  <option name="projectId" value="gymceska-manual" />
-                  <option name="projectNumber" value="477220885813" />
+                  <option name="appId" value="PLACEHOLDER" />
+                  <option name="mobileSdkAppId" value="" />
+                  <option name="projectId" value="" />
+                  <option name="projectNumber" value="" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

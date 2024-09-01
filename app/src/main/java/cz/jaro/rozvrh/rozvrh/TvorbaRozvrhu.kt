@@ -12,6 +12,7 @@ object TvorbaRozvrhu {
         tridy: List<Vjec.TridaVjec>,
         new: Boolean,
     ): Tyden = vytvoritRozvrhPodleJinych(vjec, tridy) { trida ->
+        println(trida)
         if (new) repo.upravenyRozvrh(trida.jmeno)!! else repo.puvodniRozvrh(trida.jmeno)!!
     }
 

@@ -104,12 +104,14 @@ class RozvrhViewModel(
     }
 
     val edit: (String, (AdvancedTyden) -> AdvancedTyden) -> Unit = repo::upravitRozvrh
+
+    val changes = repo.changes.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5.seconds), null)
 }
 
 private fun Tyden.mark(puvodni: Tyden) = mapIndexed { iDne, den ->
     den.mapIndexed { iHodiny, hodina ->
         val odstranena = puvodni[iDne][iHodiny].find { b -> b.id !in hodina.map { it.id } }
-        if (hodina.all { it.predmet == "ST" }) listOf(Bunka(id = hodina.first().id, predmet = "ST", ucebna = "mim", ucitel = "Tren", typ = TypBunky.Upravena  ))
+        if (hodina.all { it.predmet == "ST" }) listOf(Bunka(id = hodina.first().id, predmet = "ST", ucebna = "mim", ucitel = "Tren", typ = TypBunky.Upravena))
         else (hodina.map { bunka ->
             val puvodniBunka = puvodni[iDne][iHodiny].find { it.id == bunka.id }
             if (puvodniBunka == null || puvodniBunka != bunka) bunka.copy(typ = TypBunky.Upravena) else bunka.copy(typ = TypBunky.Normalni)

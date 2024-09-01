@@ -1,6 +1,7 @@
 package cz.jaro.rozvrh.rozvrh
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.FolderCopy
@@ -19,8 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.res.stringResource
-import cz.jaro.rozvrh.R
 
 
 const val CELA_HODINA = -9
@@ -34,14 +33,22 @@ fun AppBar(
     upload: () -> Unit,
     changeView: () -> Unit,
     pamet: AdresaBunky?,
+    showFeatures: () -> Unit,
     zapomenout: () -> Unit,
     najitProblemy: () -> Unit,
 ) {
     TopAppBar(
         title = {
-            Text(text = stringResource(R.string.rozvrh))
+            Text(text = "R Editor")
         },
         actions = {
+            IconButton(
+                onClick = {
+                    showFeatures()
+                }
+            ) {
+                Icon(Icons.AutoMirrored.Filled.Sort, "Sekce")
+            }
             var c by remember { mutableIntStateOf(0) }
             IconButton(
                 onClick = {

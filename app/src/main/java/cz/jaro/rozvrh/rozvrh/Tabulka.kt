@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.filled.FileCopy
 import androidx.compose.material.icons.filled.FolderCopy
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.QuestionMark
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -63,11 +65,14 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.serializer
 
+@Serializable
 data class AdresaBunky(
     val iDne: Int,
     val iHodiny: Int,
     val iBunky: Int,
-)
+) {
+    override fun toString() = "$iDne.$iHodiny.$iBunky"
+}
 
 context(ColumnScope)
 @Composable
@@ -383,7 +388,18 @@ private fun BunkaAOkoli(
 
         val vysledek = mistnosti.filter { it.zkratka !in plneTridy }
 
-        vysledkyDialog = vysledek.map { "M ${it.zkratka}" }
+        vysledkyDialog = vysledek.map { "U ${it.zkratka}" }
+    }
+
+    fun coJeKde() {
+        val vse = tridy.drop(1).map { trida ->
+            val h = ziskatRozvrh(trida)[adresa.iDne][adresa.iHodiny]
+            "${trida.zkratka}: " + h.joinToString { bunka ->
+                "${bunka.predmet} (${bunka.ucebna})"
+            }
+        }
+
+        vysledkyDialog = vse.map { "T $it" }
     }
 
     Bunka(
@@ -475,7 +491,8 @@ private fun BunkaAOkoli(
                         },
                         contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
                     ) {
-                        Icon(Icons.Default.QuestionMark, null, Modifier.size(ButtonDefaults.IconSize))
+                        Icon(Icons.Default.Shuffle, null, Modifier.size(ButtonDefaults.IconSize))
+                        Icon(Icons.Default.Search, null, Modifier.size(ButtonDefaults.IconSize))
                         Spacer(Modifier.width(ButtonDefaults.IconSpacing))
                         Text("Najít prohození")
                     }
@@ -546,9 +563,20 @@ private fun BunkaAOkoli(
                     },
                     contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
                 ) {
-                    Icon(Icons.Default.QuestionMark, null, Modifier.size(ButtonDefaults.IconSize))
+                    Icon(Icons.Default.Search, null, Modifier.size(ButtonDefaults.IconSize))
                     Spacer(Modifier.width(ButtonDefaults.IconSpacing))
                     Text("Najít volnou")
+                }
+                TextButton(
+                    onClick = {
+                        coJeKde()
+                        novaBunkaDialog = false
+                    },
+                    contentPadding = ButtonDefaults.TextButtonWithIconContentPadding,
+                ) {
+                    Icon(Icons.Default.QuestionMark, null, Modifier.size(ButtonDefaults.IconSize))
+                    Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                    Text("Co kde je?")
                 }
             }
         }
@@ -576,11 +604,17 @@ private fun BunkaAOkoli(
                         if (text.startsWith("M")) {
                             mistnosti.find { it.zkratka == text.split(" ")[1] }?.let { vybratRozvrh(it) }
                         }
+                        if (text.startsWith("U")) {
+                            novaUcebna = text.split(" ")[1]
+                        }
                         if (text.startsWith("V")) {
                             vyucujici.find { it.zkratka == text.split(" ")[1] }?.let { vybratRozvrh(it) }
                         }
+                        if (text.startsWith("T")) {
+                            tridy.find { it.zkratka == text.split(" ")[1] }?.let { vybratRozvrh(it) }
+                        }
                         vysledkyDialog = emptyList()
-                    })
+                    }.heightIn(min = 32.dp))
                 }
             }
         }

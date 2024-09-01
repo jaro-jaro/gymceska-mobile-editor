@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.net.toFile
 import androidx.core.net.toUri
+import cz.jaro.rozvrh.rozvrh.AdresaBunky
 import cz.jaro.rozvrh.rozvrh.AdvancedTyden
 import cz.jaro.rozvrh.rozvrh.Bunka
 import cz.jaro.rozvrh.rozvrh.Tyden
@@ -12,6 +13,7 @@ import cz.jaro.rozvrh.rozvrh.Tyden2
 import cz.jaro.rozvrh.rozvrh.TypBunky
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -150,24 +152,6 @@ class Repository(
             }
     }
 
-//    init {
-//        CoroutineScope(Dispatchers.IO).launch {
-//            delay(1000)
-//            upravitRozvrh("1.A") {
-//                println(this[1][1][0])
-//                this.toMutableList().also {
-//                    it[1] = it[1].toMutableList().also {
-//                        it[1] = it[1].toMutableList().also {
-//                            it[0] = Bunka.prazdna(id = "1.A-1-1-0")
-//                        }
-//                    }
-//                }.also {
-//                    println(it[1][1][0])
-//                }
-//            }
-//        }
-//    }
-
     private fun OutputStream.downloadData() {
         val text = json.encodeToString(upraveneRozvrhy.value?.normalizovat())
         write(text.encodeToByteArray())
@@ -176,6 +160,40 @@ class Repository(
     fun Uri.downloadData() {
         contentResolver.openOutputStream(this)?.use {
             it.downloadData()
+        }
+    }
+
+    val changes = upraveneRozvrhy.combine(puvodniRozvrhy) { new, old ->
+        if (new == null || old == null) return@combine null
+        (old.flatMap { (trida, tyden) ->
+            tyden.flatMapIndexed { iDne, den ->
+                den.flatMapIndexed { iHodiny, hodina ->
+                    hodina.mapIndexed { iBunky, bunka ->
+                        Triple(0, bunka.copy(tridaSkupina = "$trida ${bunka.tridaSkupina}"), AdresaBunky(iDne, iHodiny, iBunky))
+                    }
+                }
+            }
+        } + new.flatMap { (trida, tyden) ->
+            tyden.dny.flatMapIndexed { iDne, den ->
+                den.flatMapIndexed { iHodiny, hodina ->
+                    hodina.mapIndexed { iBunky, bunka ->
+                        Triple(1, bunka.copy(tridaSkupina = "$trida ${bunka.tridaSkupina}"), AdresaBunky(iDne, iHodiny, iBunky))
+                    }
+                }
+            }
+        }).groupBy { it.second.id }.mapNotNull { (_, v) ->
+            if (v.first().second.id.endsWith("#")) null else {
+                val oldB = v.single { it.first == 0 }
+                val newB = v.single { it.first == 1 }
+                println(v)
+                if (oldB.second == newB.second && oldB.third == newB.third) null
+                else Change(
+                    from = oldB.second,
+                    fromLocation = oldB.third,
+                    to = newB.second,
+                    toLocation = newB.third,
+                )
+            }
         }
     }
 }
